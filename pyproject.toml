@@ -30,9 +30,9 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/iainfinkbeiner/hermes-dashboard"
-Repository = "https://github.com/iainfinkbeiner/hermes-dashboard"
-Issues = "https://github.com/iainfinkbeiner/hermes-dashboard/issues"
+Homepage = "https://github.com/iainfink/hermes-dashboard"
+Repository = "https://github.com/iainfink/hermes-dashboard"
+Issues = "https://github.com/iainfink/hermes-dashboard/issues"
 
 [project.scripts]
 hermes-dashboard = "hermes_dashboard.cli:main"

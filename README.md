@@ -32,7 +32,7 @@ pip install hermes-dashboard
 Or install from source:
 
 ```bash
-git clone https://github.com/iainfinkbeiner/hermes-dashboard.git
+git clone https://github.com/iainfink/hermes-dashboard.git
 cd hermes-dashboard
 pip install -e .
 ```

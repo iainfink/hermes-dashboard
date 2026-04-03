@@ -6,7 +6,7 @@ Thanks for your interest in contributing! 🎉
 
 ```bash
 # Clone the repo
-git clone https://github.com/iainfinkbeiner/hermes-dashboard.git
+git clone https://github.com/iainfink/hermes-dashboard.git
 cd hermes-dashboard
 
 # Install in development mode
