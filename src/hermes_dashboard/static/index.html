@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hermes Dashboard</title>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --bg2: #12121a;
+    --bg3: #1a1a26;
+    --border: #2a2a3a;
+    --text: #e0e0e8;
+    --text2: #8888a0;
+    --accent: #7c6aef;
+    --accent2: #a78bfa;
+    --green: #34d399;
+    --yellow: #fbbf24;
+    --red: #f87171;
+    --blue: #60a5fa;
+    --cyan: #22d3ee;
+    --orange: #fb923c;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-image:
+      linear-gradient(rgba(124, 106, 239, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(124, 106, 239, 0.03) 1px, transparent 1px);
+    background-size: 50px 50px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Header */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 0 30px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 30px;
+  }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .logo {
+    font-size: 28px;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--accent), var(--cyan));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.5px;
+  }
+
+  .logo-icon {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, var(--accent), var(--cyan));
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    box-shadow: 0 0 20px rgba(124, 106, 239, 0.3);
+  }
+
+  .status-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .status-badge.online {
+    background: rgba(52, 211, 153, 0.1);
+    border: 1px solid rgba(52, 211, 153, 0.3);
+    color: var(--green);
+  }
+
+  .status-badge.offline {
+    background: rgba(248, 113, 113, 0.1);
+    border: 1px solid rgba(248, 113, 113, 0.3);
+    color: var(--red);
+  }
+
+  .pulse {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  .pulse.off { background: var(--red); animation: none; }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.4); }
+    50% { opacity: 0.8; box-shadow: 0 0 0 8px rgba(52, 211, 153, 0); }
+  }
+
+  .refresh-info {
+    font-size: 11px;
+    color: var(--text2);
+  }
+
+  /* Stats Grid */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin-bottom: 30px;
+  }
+
+  .stat-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    transition: all 0.2s;
+  }
+
+  .stat-card:hover {
+    border-color: var(--accent);
+    box-shadow: 0 0 20px rgba(124, 106, 239, 0.1);
+    transform: translateY(-2px);
+  }
+
+  .stat-label {
+    font-size: 11px;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+  }
+
+  .stat-value {
+    font-size: 28px;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--text), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .stat-sub {
+    font-size: 11px;
+    color: var(--text2);
+    margin-top: 4px;
+  }
+
+  /* Panels */
+  .panels {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 30px;
+  }
+
+  @media (max-width: 900px) {
+    .panels { grid-template-columns: 1fr; }
+  }
+
+  .panel {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .panel-full {
+    grid-column: 1 / -1;
+  }
+
+  .panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg3);
+  }
+
+  .panel-title {
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .panel-body {
+    padding: 0;
+    max-height: 400px;
+    overflow-y: auto;
+  }
+
+  .panel-body::-webkit-scrollbar { width: 6px; }
+  .panel-body::-webkit-scrollbar-track { background: transparent; }
+  .panel-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* Session rows */
+  .session-row {
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+    border-bottom: 1px solid rgba(42, 42, 58, 0.5);
+    cursor: pointer;
+    transition: background 0.15s;
+    gap: 12px;
+  }
+
+  .session-row:hover {
+    background: rgba(124, 106, 239, 0.05);
+  }
+
+  .session-row:last-child { border-bottom: none; }
+
+  .session-status {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .session-status.active { background: var(--green); box-shadow: 0 0 8px rgba(52, 211, 153, 0.5); }
+  .session-status.ended { background: var(--text2); }
+
+  .session-info { flex: 1; min-width: 0; }
+
+  .session-title {
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .session-meta {
+    font-size: 11px;
+    color: var(--text2);
+    margin-top: 2px;
+    display: flex;
+    gap: 12px;
+  }
+
+  .session-tokens {
+    font-size: 11px;
+    color: var(--text2);
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 600;
+  }
+
+  .badge-cli { background: rgba(96, 165, 250, 0.15); color: var(--blue); }
+  .badge-gateway { background: rgba(124, 106, 239, 0.15); color: var(--accent2); }
+  .badge-cron { background: rgba(251, 191, 36, 0.15); color: var(--yellow); }
+  .badge-subagent { background: rgba(34, 211, 238, 0.15); color: var(--cyan); }
+  .badge-active { background: rgba(52, 211, 153, 0.15); color: var(--green); }
+  .badge-paused { background: rgba(251, 191, 36, 0.15); color: var(--yellow); }
+
+  /* Cron rows */
+  .cron-row {
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+    border-bottom: 1px solid rgba(42, 42, 58, 0.5);
+    gap: 12px;
+  }
+
+  .cron-row:last-child { border-bottom: none; }
+
+  .cron-icon { font-size: 18px; flex-shrink: 0; }
+
+  .cron-info { flex: 1; }
+
+  .cron-name { font-size: 13px; font-weight: 500; }
+
+  .cron-schedule { font-size: 11px; color: var(--text2); margin-top: 2px; }
+
+  /* Skills */
+  .skills-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 16px 20px;
+  }
+
+  .skill-tag {
+    padding: 4px 10px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 11px;
+    color: var(--text2);
+    transition: all 0.15s;
+    cursor: default;
+  }
+
+  .skill-tag:hover {
+    border-color: var(--accent);
+    color: var(--accent2);
+  }
+
+  /* Empty state */
+  .empty-state {
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--text2);
+    font-size: 13px;
+  }
+
+  .empty-state .icon { font-size: 32px; margin-bottom: 12px; }
+
+  /* Message viewer modal */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 100;
+    backdrop-filter: blur(4px);
+  }
+
+  .modal-overlay.active { display: flex; align-items: center; justify-content: center; }
+
+  .modal {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    width: 90%;
+    max-width: 800px;
+    max-height: 80vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg3);
+  }
+
+  .modal-close {
+    background: none;
+    border: none;
+    color: var(--text2);
+    font-size: 20px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+  }
+
+  .modal-close:hover { background: var(--border); color: var(--text); }
+
+  .modal-body {
+    padding: 20px;
+    overflow-y: auto;
+    flex: 1;
+  }
+
+  .msg {
+    margin-bottom: 16px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-size: 13px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .msg.user {
+    background: rgba(124, 106, 239, 0.1);
+    border-left: 3px solid var(--accent);
+  }
+
+  .msg.assistant {
+    background: rgba(52, 211, 153, 0.05);
+    border-left: 3px solid var(--green);
+  }
+
+  .msg.tool {
+    background: rgba(251, 191, 36, 0.05);
+    border-left: 3px solid var(--yellow);
+    font-size: 11px;
+    max-height: 150px;
+    overflow-y: auto;
+  }
+
+  .msg-role {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+    color: var(--text2);
+  }
+
+  /* Process rows */
+  .proc-row {
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+    border-bottom: 1px solid rgba(42, 42, 58, 0.5);
+    gap: 12px;
+  }
+
+  /* Category labels in skills */
+  .skill-category {
+    width: 100%;
+    padding: 8px 20px 4px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--accent2);
+  }
+
+  /* Tabs */
+  .tab-row {
+    display: flex;
+    gap: 2px;
+  }
+
+  .tab {
+    padding: 6px 14px;
+    font-size: 11px;
+    background: transparent;
+    border: none;
+    color: var(--text2);
+    cursor: pointer;
+    border-radius: 6px 6px 0 0;
+    font-family: inherit;
+    transition: all 0.15s;
+  }
+
+  .tab:hover { color: var(--text); background: var(--bg3); }
+  .tab.active { color: var(--accent2); background: var(--bg3); }
+
+  /* Glow effect for active items */
+  @keyframes glow {
+    0%, 100% { box-shadow: 0 0 5px rgba(124, 106, 239, 0.2); }
+    50% { box-shadow: 0 0 15px rgba(124, 106, 239, 0.4); }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <div class="logo-icon">⚡</div>
+      <div>
+        <div class="logo">Hermes Dashboard</div>
+        <div class="refresh-info">Auto-refreshes every 10s · <span id="last-refresh">—</span></div>
+      </div>
+    </div>
+    <div id="gateway-badge" class="status-badge offline">
+      <div class="pulse off"></div>
+      <span>Checking...</span>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-grid" id="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">Sessions</div>
+      <div class="stat-value" id="stat-sessions">—</div>
+      <div class="stat-sub" id="stat-sessions-sub"></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Messages</div>
+      <div class="stat-value" id="stat-messages">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Tool Calls</div>
+      <div class="stat-value" id="stat-tools">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Tokens (In/Out)</div>
+      <div class="stat-value" id="stat-tokens">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Est. Cost</div>
+      <div class="stat-value" id="stat-cost">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Cron Jobs</div>
+      <div class="stat-value" id="stat-crons">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Skills</div>
+      <div class="stat-value" id="stat-skills">—</div>
+    </div>
+  </div>
+
+  <!-- Main Panels -->
+  <div class="panels">
+    <!-- Sessions -->
+    <div class="panel panel-full">
+      <div class="panel-header">
+        <div class="panel-title">🗂 Sessions</div>
+        <div class="tab-row">
+          <button class="tab active" onclick="filterSessions('all')">All</button>
+          <button class="tab" onclick="filterSessions('active')">Active</button>
+          <button class="tab" onclick="filterSessions('cli')">CLI</button>
+          <button class="tab" onclick="filterSessions('subagent')">Subagents</button>
+        </div>
+      </div>
+      <div class="panel-body" id="sessions-list">
+        <div class="empty-state"><div class="icon">📭</div>Loading...</div>
+      </div>
+    </div>
+
+    <!-- Cron Jobs -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">⏰ Cron Jobs</div>
+      </div>
+      <div class="panel-body" id="cron-list">
+        <div class="empty-state"><div class="icon">⏰</div>No cron jobs scheduled</div>
+      </div>
+    </div>
+
+    <!-- Background Processes -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">⚙️ Background Processes</div>
+      </div>
+      <div class="panel-body" id="process-list">
+        <div class="empty-state"><div class="icon">💤</div>No background processes</div>
+      </div>
+    </div>
+
+    <!-- Skills -->
+    <div class="panel panel-full">
+      <div class="panel-header">
+        <div class="panel-title">🧠 Skills Library</div>
+        <span style="font-size:11px;color:var(--text2)" id="skills-count"></span>
+      </div>
+      <div class="panel-body" id="skills-list" style="max-height: 300px;">
+        <div class="empty-state"><div class="icon">📚</div>Loading skills...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Message Modal -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="panel-title" id="modal-title">Session Messages</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+let allSessions = [];
+let currentFilter = 'all';
+
+function fmt(n) {
+  if (n === null || n === undefined) return '—';
+  if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+  if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+  return n.toString();
+}
+
+function timeAgo(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  const s = Math.floor((Date.now() - d) / 1000);
+  if (s < 60) return s + 's ago';
+  if (s < 3600) return Math.floor(s / 60) + 'm ago';
+  if (s < 86400) return Math.floor(s / 3600) + 'h ago';
+  return Math.floor(s / 86400) + 'd ago';
+}
+
+async function fetchJSON(url) {
+  const r = await fetch(url);
+  return r.json();
+}
+
+async function refreshAll() {
+  try {
+    const [stats, sessions, gateway, crons, skills, processes] = await Promise.all([
+      fetchJSON('/api/stats'),
+      fetchJSON('/api/sessions?limit=50'),
+      fetchJSON('/api/gateway'),
+      fetchJSON('/api/cron'),
+      fetchJSON('/api/skills'),
+      fetchJSON('/api/processes'),
+    ]);
+
+    // Stats
+    document.getElementById('stat-sessions').textContent = stats.total_sessions;
+    document.getElementById('stat-sessions-sub').textContent =
+      stats.active_sessions > 0 ? stats.active_sessions + ' active' : '';
+    document.getElementById('stat-messages').textContent = fmt(stats.total_messages);
+    document.getElementById('stat-tools').textContent = fmt(stats.total_tool_calls);
+    document.getElementById('stat-tokens').textContent =
+      fmt(stats.total_tokens_in) + '/' + fmt(stats.total_tokens_out);
+    document.getElementById('stat-cost').textContent = '$' + stats.total_cost_usd.toFixed(2);
+    document.getElementById('stat-crons').textContent = stats.cron_jobs_active + '/' + stats.cron_jobs_total;
+    document.getElementById('stat-skills').textContent = stats.skills_count;
+
+    // Gateway
+    const gw = document.getElementById('gateway-badge');
+    const isOnline = gateway.gateway_state === 'running';
+    gw.className = 'status-badge ' + (isOnline ? 'online' : 'offline');
+    gw.innerHTML = `<div class="pulse ${isOnline ? '' : 'off'}"></div><span>Gateway ${isOnline ? 'Online' : 'Offline'}</span>`;
+
+    // Sessions
+    allSessions = sessions;
+    renderSessions();
+
+    // Cron
+    renderCrons(crons);
+
+    // Processes
+    renderProcesses(processes);
+
+    // Skills
+    renderSkills(skills);
+
+    document.getElementById('last-refresh').textContent = new Date().toLocaleTimeString();
+  } catch (e) {
+    console.error('Refresh failed:', e);
+  }
+}
+
+function renderSessions() {
+  const container = document.getElementById('sessions-list');
+  let filtered = allSessions;
+
+  if (currentFilter === 'active') filtered = allSessions.filter(s => !s.ended_at);
+  else if (currentFilter === 'cli') filtered = allSessions.filter(s => s.source === 'cli');
+  else if (currentFilter === 'subagent') filtered = allSessions.filter(s => s.is_subagent);
+
+  if (filtered.length === 0) {
+    container.innerHTML = '<div class="empty-state"><div class="icon">📭</div>No sessions match this filter</div>';
+    return;
+  }
+
+  container.innerHTML = filtered.map(s => {
+    const active = !s.ended_at;
+    const title = s.title || s.id;
+    const sourceBadge = s.is_subagent ? '<span class="badge badge-subagent">subagent</span>' :
+      s.source === 'cli' ? '<span class="badge badge-cli">cli</span>' :
+      `<span class="badge badge-gateway">${s.source}</span>`;
+
+    return `<div class="session-row" onclick="showSession('${s.id}', '${title.replace(/'/g, "\\'")}')">
+      <div class="session-status ${active ? 'active' : 'ended'}"></div>
+      <div class="session-info">
+        <div class="session-title">${title}</div>
+        <div class="session-meta">
+          ${sourceBadge}
+          ${active ? '<span class="badge badge-active">active</span>' : ''}
+          <span>${s.model || '—'}</span>
+          <span>${timeAgo(s.started_at)}</span>
+          <span>${s.message_count || 0} msgs</span>
+        </div>
+      </div>
+      <div class="session-tokens">
+        <div>${fmt(s.input_tokens)}↓ ${fmt(s.output_tokens)}↑</div>
+        <div style="color: ${s.estimated_cost_usd > 0.1 ? 'var(--orange)' : 'var(--text2)'}">
+          ${s.estimated_cost_usd ? '$' + s.estimated_cost_usd.toFixed(4) : ''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function filterSessions(filter) {
+  currentFilter = filter;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  renderSessions();
+}
+
+function renderCrons(crons) {
+  const container = document.getElementById('cron-list');
+  if (!crons.length) {
+    container.innerHTML = '<div class="empty-state"><div class="icon">⏰</div>No cron jobs scheduled</div>';
+    return;
+  }
+  container.innerHTML = crons.map(j => {
+    const active = j.status === 'active' || j.enabled !== false;
+    return `<div class="cron-row">
+      <div class="cron-icon">${active ? '🟢' : '⏸️'}</div>
+      <div class="cron-info">
+        <div class="cron-name">${j.name || j.id || 'Unnamed job'}</div>
+        <div class="cron-schedule">${j.schedule || j.cron || '—'} · ${j.prompt ? j.prompt.slice(0, 80) + '...' : '—'}</div>
+      </div>
+      <span class="badge ${active ? 'badge-active' : 'badge-paused'}">${active ? 'active' : 'paused'}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderProcesses(procs) {
+  const container = document.getElementById('process-list');
+  if (!procs || !procs.length) {
+    container.innerHTML = '<div class="empty-state"><div class="icon">💤</div>No background processes running</div>';
+    return;
+  }
+  container.innerHTML = procs.map(p => `<div class="proc-row">
+    <div class="cron-icon">⚙️</div>
+    <div class="cron-info">
+      <div class="cron-name">${p.command || p.id || 'Process'}</div>
+      <div class="cron-schedule">PID: ${p.pid || '—'} · Started: ${p.started_at || '—'}</div>
+    </div>
+    <span class="badge badge-active">${p.status || 'running'}</span>
+  </div>`).join('');
+}
+
+function renderSkills(skills) {
+  const container = document.getElementById('skills-list');
+  document.getElementById('skills-count').textContent = skills.length + ' loaded';
+
+  // Group by category
+  const groups = {};
+  skills.forEach(s => {
+    const cat = s.category || 'uncategorized';
+    if (!groups[cat]) groups[cat] = [];
+    groups[cat].push(s);
+  });
+
+  let html = '';
+  for (const [cat, items] of Object.entries(groups).sort()) {
+    html += `<div class="skill-category">${cat}</div>`;
+    html += `<div class="skills-grid">`;
+    items.forEach(s => {
+      html += `<div class="skill-tag" title="${(s.description || '').replace(/"/g, '&quot;')}">${s.name}</div>`;
+    });
+    html += `</div>`;
+  }
+  container.innerHTML = html;
+}
+
+async function showSession(id, title) {
+  document.getElementById('modal-overlay').classList.add('active');
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-body').innerHTML = '<div class="empty-state">Loading messages...</div>';
+
+  try {
+    const msgs = await fetchJSON(`/api/session/messages?session_id=${id}`);
+    if (!msgs.length) {
+      document.getElementById('modal-body').innerHTML = '<div class="empty-state">No messages in this session</div>';
+      return;
+    }
+    document.getElementById('modal-body').innerHTML = msgs.map(m => {
+      const role = m.role || 'unknown';
+      const cls = role === 'user' ? 'user' : role === 'assistant' ? 'assistant' : 'tool';
+      const label = m.tool_name ? `tool: ${m.tool_name}` : role;
+      const content = (m.content || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      return `<div class="msg ${cls}">
+        <div class="msg-role">${label} · ${timeAgo(m.timestamp)}</div>
+        ${content}
+      </div>`;
+    }).join('');
+  } catch (e) {
+    document.getElementById('modal-body').innerHTML = `<div class="empty-state">Error: ${e.message}</div>`;
+  }
+}
+
+function closeModal(e) {
+  if (!e || e.target === document.getElementById('modal-overlay')) {
+    document.getElementById('modal-overlay').classList.remove('active');
+  }
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+// Initial load + auto-refresh
+refreshAll();
+setInterval(refreshAll, 10000);
+</script>
+</body>
+</html>
